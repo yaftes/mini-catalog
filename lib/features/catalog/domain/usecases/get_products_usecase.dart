@@ -3,10 +3,10 @@ import '../entities/product.dart';
 import '../repositories/product_repository.dart';
 import '../../../../core/errors/failures.dart';
 
-class GetProducts {
+class GetProductsUsecase {
   final ProductRepository repository;
 
-  GetProducts(this.repository);
+  GetProductsUsecase(this.repository);
 
   Future<Either<Failure, List<Product>>> call({
     required int page,
