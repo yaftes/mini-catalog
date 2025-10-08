@@ -1,5 +1,7 @@
 import 'package:hive/hive.dart';
+import 'package:mini_catalog/core/const/cache_constants.dart';
 import '../models/product_model.dart';
+import '../../../../core/errors/exceptions.dart';
 
 abstract class ProductLocalDataSource {
   Future<void> cacheProducts(List<ProductModel> products);
@@ -13,14 +15,26 @@ class ProductLocalDataSourceImpl implements ProductLocalDataSource {
 
   @override
   Future<void> cacheProducts(List<ProductModel> products) async {
-    await box.put('cached_products', products.map((p) => p.toJson()).toList());
+    try {
+      final jsonList = products.map((p) => p.toJson()).toList();
+      await box.put(CacheConstants.cachedProducts, jsonList);
+    } catch (e) {
+      throw CacheException('Failed to cache products: $e');
+    }
   }
 
   @override
   Future<List<ProductModel>> getCachedProducts() async {
-    final cached = box.get('cached_products', defaultValue: []);
-    return (cached as List)
-        .map((json) => ProductModel.fromJson(Map<String, dynamic>.from(json)))
-        .toList();
+    try {
+      final cached = box.get(CacheConstants.cachedProducts);
+
+      if (cached == null || cached is! List) return [];
+
+      return cached
+          .map((json) => ProductModel.fromJson(Map<String, dynamic>.from(json)))
+          .toList();
+    } catch (e) {
+      throw CacheException('Failed to get cached products: $e');
+    }
   }
 }

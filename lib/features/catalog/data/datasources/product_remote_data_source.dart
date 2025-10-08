@@ -1,5 +1,7 @@
 import 'package:dio/dio.dart';
+import 'package:mini_catalog/core/const/api_constants.dart';
 import '../models/product_model.dart';
+import '../../../../core/errors/exceptions.dart';
 
 abstract class ProductRemoteDataSource {
   Future<List<ProductModel>> getProducts();
@@ -13,17 +15,37 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
 
   @override
   Future<List<ProductModel>> getProducts() async {
-    final response = await dio.get('https://fakestoreapi.com/products');
-    return (response.data as List)
-        .map((json) => ProductModel.fromJson(json))
-        .toList();
+    try {
+      final response = await dio.get(ApiConstants.products);
+
+      if (response.statusCode == 200) {
+        return (response.data as List)
+            .map((json) => ProductModel.fromJson(json))
+            .toList();
+      } else {
+        throw ServerException(
+          'Failed to fetch products: ${response.statusCode}',
+        );
+      }
+    } catch (e) {
+      throw ServerException(e.toString());
+    }
   }
 
   @override
   Future<List<String>> getCategories() async {
-    final response = await dio.get(
-      'https://fakestoreapi.com/products/categories',
-    );
-    return List<String>.from(response.data);
+    try {
+      final response = await dio.get(ApiConstants.categories);
+
+      if (response.statusCode == 200) {
+        return List<String>.from(response.data);
+      } else {
+        throw ServerException(
+          'Failed to fetch categories: ${response.statusCode}',
+        );
+      }
+    } catch (e) {
+      throw ServerException(e.toString());
+    }
   }
 }
