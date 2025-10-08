@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mini_catalog/features/product_detail/presentation/bloc/product_detail_bloc.dart';
+import 'package:mini_catalog/features/product_detail/presentation/pages/product_detail_page.dart';
 import '../../domain/entities/product.dart';
 import '../bloc/catalog_bloc.dart';
 import '../bloc/catalog_events.dart';
@@ -222,7 +224,18 @@ class _CatalogPageState extends State<CatalogPage> {
                                 ),
                               ),
                               onTap: () {
-                                print('Selected product: ${product.title}');
+                                print("id ${product.id}");
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => BlocProvider.value(
+                                      value: context.read<ProductDetailBloc>(),
+                                      child: ProductDetailPage(
+                                        productId: product.id.toString(),
+                                      ),
+                                    ),
+                                  ),
+                                );
                               },
                             ),
                           );
