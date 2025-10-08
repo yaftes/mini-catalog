@@ -3,7 +3,6 @@ import '../../domain/entities/product.dart';
 
 abstract class CatalogState extends Equatable {
   const CatalogState();
-
   @override
   List<Object?> get props => [];
 }

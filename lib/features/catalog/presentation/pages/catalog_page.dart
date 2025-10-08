@@ -51,69 +51,171 @@ class _CatalogPageState extends State<CatalogPage> {
       ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-        child: Container(
-          decoration: const BoxDecoration(color: Colors.white),
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: TextField(
-                  controller: _searchController,
-                  onChanged: (value) {
-                    context.read<CatalogBloc>().add(CatalogQueryChanged(value));
-                  },
-                  decoration: InputDecoration(
-                    hintText: 'Search products...',
-                    prefixIcon: const Icon(Icons.search),
-                    fillColor: Colors.white,
-                    filled: true,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: TextField(
+                controller: _searchController,
+                onChanged: (value) {
+                  context.read<CatalogBloc>().add(CatalogQueryChanged(value));
+                },
+                decoration: InputDecoration(
+                  hintText: 'Search products...',
+                  prefixIcon: const Icon(Icons.search),
+                  fillColor: Colors.white,
+                  filled: true,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
                   ),
                 ),
               ),
+            ),
 
-              BlocBuilder<CatalogBloc, CatalogState>(
+            BlocBuilder<CatalogBloc, CatalogState>(
+              builder: (context, state) {
+                List<String> categories = [];
+                String selected = '';
+
+                if (state is CatalogSuccess) {
+                  categories = state.categories;
+                  selected = state.selectedCategory;
+                } else if (state is CatalogEmpty) {
+                  categories = state.categories;
+                  selected = '';
+                }
+
+                if (categories.isNotEmpty) {
+                  return SizedBox(
+                    height: 50,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: categories.length + 1,
+                      itemBuilder: (context, index) {
+                        final isAll = index == 0;
+                        final category = isAll ? 'All' : categories[index - 1];
+                        final isSelected =
+                            (selected.isEmpty && isAll) || selected == category;
+
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 6),
+                          child: ChoiceChip(
+                            label: Text(category),
+                            selected: isSelected,
+                            selectedColor: Colors.black,
+                            backgroundColor: Colors.grey,
+                            labelStyle: const TextStyle(color: Colors.white),
+                            onSelected: (_) {
+                              context.read<CatalogBloc>().add(
+                                CatalogCategoryChanged(isAll ? '' : category),
+                              );
+                            },
+                          ),
+                        );
+                      },
+                    ),
+                  );
+                }
+
+                return const SizedBox.shrink();
+              },
+            ),
+
+            const SizedBox(height: 8),
+
+            Expanded(
+              child: BlocBuilder<CatalogBloc, CatalogState>(
                 builder: (context, state) {
-                  List<String> categories = [];
-                  String selected = '';
-
-                  if (state is CatalogSuccess) {
-                    categories = state.categories;
-                    selected = state.selectedCategory;
+                  if (state is CatalogInitial || state is CatalogLoading) {
+                    return const CatalogShimmer();
+                  } else if (state is CatalogFailure) {
+                    return Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(state.errorMessage),
+                          const SizedBox(height: 8),
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.deepPurple,
+                            ),
+                            onPressed: () {
+                              context.read<CatalogBloc>().add(
+                                CatalogRetryRequested(),
+                              );
+                            },
+                            child: const Text('Retry'),
+                          ),
+                        ],
+                      ),
+                    );
                   } else if (state is CatalogEmpty) {
-                    categories = state.categories;
-                    selected = '';
-                  }
+                    return const Center(child: Text('No products found'));
+                  } else if (state is CatalogSuccess) {
+                    final products = state.products;
 
-                  if (categories.isNotEmpty) {
-                    return SizedBox(
-                      height: 50,
+                    return RefreshIndicator(
+                      onRefresh: () async {
+                        context.read<CatalogBloc>().add(CatalogRefreshed());
+                      },
                       child: ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: categories.length + 1,
+                        controller: _scrollController,
+                        itemCount: products.length + (state.hasMore ? 1 : 0),
                         itemBuilder: (context, index) {
-                          final isAll = index == 0;
-                          final category = isAll
-                              ? 'All'
-                              : categories[index - 1];
-                          final isSelected =
-                              (selected.isEmpty && isAll) ||
-                              selected == category;
+                          if (index == products.length) {
+                            return const Padding(
+                              padding: EdgeInsets.all(16),
+                              child: Center(child: CircularProgressIndicator()),
+                            );
+                          }
 
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 6),
-                            child: ChoiceChip(
-                              label: Text(category),
-                              selected: isSelected,
-                              selectedColor: Colors.black,
-                              backgroundColor: Colors.grey,
-                              labelStyle: TextStyle(color: Colors.white),
-                              onSelected: (_) {
-                                context.read<CatalogBloc>().add(
-                                  CatalogCategoryChanged(isAll ? '' : category),
+                          final Product product = products[index];
+
+                          return Card(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            margin: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            elevation: 4,
+                            child: ListTile(
+                              contentPadding: const EdgeInsets.all(8),
+                              leading: ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: Image.network(
+                                  product.image,
+                                  width: 60,
+                                  height: 60,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) =>
+                                      const Icon(Icons.image),
+                                ),
+                              ),
+                              title: Text(
+                                product.title,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              subtitle: Text(
+                                '\$${product.price.toStringAsFixed(2)}',
+                                style: const TextStyle(color: Colors.black),
+                              ),
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => BlocProvider.value(
+                                      value: context.read<ProductDetailBloc>(),
+                                      child: ProductDetailPage(
+                                        productId: product.id.toString(),
+                                      ),
+                                    ),
+                                  ),
                                 );
                               },
                             ),
@@ -126,119 +228,8 @@ class _CatalogPageState extends State<CatalogPage> {
                   return const SizedBox.shrink();
                 },
               ),
-
-              const SizedBox(height: 8),
-
-              Expanded(
-                child: BlocBuilder<CatalogBloc, CatalogState>(
-                  builder: (context, state) {
-                    if (state is CatalogInitial || state is CatalogLoading) {
-                      return const Center(child: CatalogShimmer());
-                    } else if (state is CatalogFailure) {
-                      return Center(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(state.errorMessage),
-                            const SizedBox(height: 8),
-                            ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.deepPurple,
-                              ),
-                              onPressed: () {
-                                context.read<CatalogBloc>().add(
-                                  CatalogRetryRequested(),
-                                );
-                              },
-                              child: const Text('Retry'),
-                            ),
-                          ],
-                        ),
-                      );
-                    } else if (state is CatalogEmpty) {
-                      return const Center(child: Text('No products found'));
-                    } else if (state is CatalogSuccess) {
-                      final products = state.products;
-
-                      return RefreshIndicator(
-                        onRefresh: () async {
-                          context.read<CatalogBloc>().add(CatalogRefreshed());
-                        },
-                        child: ListView.builder(
-                          controller: _scrollController,
-                          itemCount: products.length + (state.hasMore ? 1 : 0),
-                          itemBuilder: (context, index) {
-                            if (index == products.length) {
-                              return const Padding(
-                                padding: EdgeInsets.all(16),
-                                child: Center(
-                                  child: CircularProgressIndicator(),
-                                ),
-                              );
-                            }
-
-                            final Product product = products[index];
-
-                            return Card(
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              margin: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 6,
-                              ),
-                              elevation: 4,
-                              child: ListTile(
-                                contentPadding: const EdgeInsets.all(8),
-                                leading: ClipRRect(
-                                  borderRadius: BorderRadius.circular(8),
-                                  child: Image.network(
-                                    product.image,
-                                    width: 60,
-                                    height: 60,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (_, __, ___) =>
-                                        const Icon(Icons.image),
-                                  ),
-                                ),
-                                title: Text(
-                                  product.title,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                                subtitle: Text(
-                                  '\$${product.price.toStringAsFixed(2)}',
-                                  style: const TextStyle(color: Colors.black),
-                                ),
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => BlocProvider.value(
-                                        value: context
-                                            .read<ProductDetailBloc>(),
-                                        child: ProductDetailPage(
-                                          productId: product.id.toString(),
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-                            );
-                          },
-                        ),
-                      );
-                    }
-
-                    return const SizedBox.shrink();
-                  },
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

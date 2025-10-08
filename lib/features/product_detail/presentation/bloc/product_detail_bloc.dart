@@ -18,8 +18,6 @@ class ProductDetailBloc extends Bloc<ProductDetailEvent, ProductDetailState> {
     emit(ProductDetailLoading());
 
     final result = await getProductDetail(event.productId);
-    print(result);
-
     result.fold(
       (failure) => emit(ProductDetailError(failure.message)),
       (product) => emit(ProductDetailLoaded(product)),
