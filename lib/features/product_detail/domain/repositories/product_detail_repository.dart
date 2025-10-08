@@ -3,5 +3,5 @@ import '../../../../core/errors/failures.dart';
 import '../../../catalog/domain/entities/product.dart';
 
 abstract class ProductDetailRepository {
-  Future<Either<Failure, Product>> fetchProductDetail(int id);
+  Future<Either<Failure, Product>> fetchProductDetail(String id);
 }

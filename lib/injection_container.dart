@@ -2,6 +2,7 @@ import 'package:get_it/get_it.dart';
 import 'package:dio/dio.dart';
 import 'package:hive/hive.dart';
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:mini_catalog/core/const/cache_constants.dart';
 import 'package:mini_catalog/features/catalog/domain/usecases/get_catagories_usecase.dart';
 import 'features/catalog/data/datasources/product_local_data_source.dart';
@@ -15,7 +16,11 @@ import 'core/network/network_info.dart';
 final sl = GetIt.instance;
 
 Future<void> init() async {
+  final appDocumentDir = await getApplicationDocumentsDirectory();
+  Hive.init(appDocumentDir.path);
+
   sl.registerLazySingleton(() => Dio());
+
   final productBox = await Hive.openBox(CacheConstants.cachedProducts);
   sl.registerLazySingleton(() => productBox);
   sl.registerLazySingleton(() => InternetConnection());
@@ -25,7 +30,6 @@ Future<void> init() async {
   sl.registerLazySingleton<ProductRemoteDataSource>(
     () => ProductRemoteDataSourceImpl(sl()),
   );
-
   sl.registerLazySingleton<ProductLocalDataSource>(
     () => ProductLocalDataSourceImpl(sl()),
   );

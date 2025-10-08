@@ -3,12 +3,12 @@ import '../repositories/product_detail_repository.dart';
 import '../../../../core/errors/failures.dart';
 import '../../../catalog/domain/entities/product.dart';
 
-class GetProductDetail {
+class GetProductDetailUsecase {
   final ProductDetailRepository repository;
 
-  GetProductDetail(this.repository);
+  GetProductDetailUsecase(this.repository);
 
-  Future<Either<Failure, Product>> call(int id) async {
+  Future<Either<Failure, Product>> call(String id) async {
     return await repository.fetchProductDetail(id);
   }
 }

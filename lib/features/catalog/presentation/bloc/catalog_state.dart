@@ -67,4 +67,11 @@ class CatalogFailure extends CatalogState {
   List<Object?> get props => [errorMessage];
 }
 
-class CatalogEmpty extends CatalogState {}
+class CatalogEmpty extends CatalogState {
+  final List<String> categories;
+
+  const CatalogEmpty({this.categories = const []});
+
+  @override
+  List<Object?> get props => [categories];
+}

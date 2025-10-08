@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:mini_catalog/app.dart';
+import 'package:hive/hive.dart';
 
-void main() {
+import 'package:mini_catalog/app/app.dart';
+import 'injection_container.dart' as di;
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await di.init();
   runApp(const MyApp());
 }

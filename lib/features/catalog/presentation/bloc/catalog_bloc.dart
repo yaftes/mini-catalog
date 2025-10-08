@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:mini_catalog/features/catalog/domain/usecases/get_catagories_usecase.dart';
-import 'package:mini_catalog/features/catalog/presentation/bloc/catalog_events.dart';
+import '../../domain/usecases/get_catagories_usecase.dart';
 import '../../domain/usecases/get_products_usecase.dart';
+import 'catalog_events.dart';
 import 'catalog_state.dart';
 
 class CatalogBloc extends Bloc<CatalogEvent, CatalogState> {
@@ -28,7 +28,6 @@ class CatalogBloc extends Bloc<CatalogEvent, CatalogState> {
     Emitter<CatalogState> emit,
   ) async {
     emit(CatalogLoading());
-
     try {
       final categoriesResult = await getCategoriesUseCase();
       final productsResult = await getProductsUseCase(
@@ -36,11 +35,16 @@ class CatalogBloc extends Bloc<CatalogEvent, CatalogState> {
         limit: _pageSize,
       );
 
-      final categories = categoriesResult.getOrElse(() => []);
+      // Convert dynamic to String
+      final categories = categoriesResult
+          .getOrElse(() => [])
+          .map((e) => e.toString())
+          .toList();
+
       final products = productsResult.getOrElse(() => []);
 
       if (products.isEmpty) {
-        emit(CatalogEmpty());
+        emit(CatalogEmpty(categories: categories));
       } else {
         emit(
           CatalogSuccess(
@@ -70,8 +74,6 @@ class CatalogBloc extends Bloc<CatalogEvent, CatalogState> {
     final currentState = state;
     if (currentState is! CatalogSuccess || !currentState.hasMore) return;
 
-    emit(CatalogLoading());
-
     final nextPage = currentState.page + 1;
 
     final result = await getProductsUseCase(
@@ -86,13 +88,10 @@ class CatalogBloc extends Bloc<CatalogEvent, CatalogState> {
       (products) {
         final allProducts = [...currentState.products, ...products];
         emit(
-          CatalogSuccess(
+          currentState.copyWith(
             products: allProducts,
-            categories: currentState.categories,
             hasMore: products.length == _pageSize,
             page: nextPage,
-            query: currentState.query,
-            selectedCategory: currentState.selectedCategory,
           ),
         );
       },
@@ -103,8 +102,13 @@ class CatalogBloc extends Bloc<CatalogEvent, CatalogState> {
     CatalogQueryChanged event,
     Emitter<CatalogState> emit,
   ) async {
-    emit(CatalogLoading());
+    final categories = state is CatalogSuccess
+        ? (state as CatalogSuccess).categories
+        : state is CatalogEmpty
+        ? (state as CatalogEmpty).categories
+        : <String>[];
 
+    emit(CatalogLoading());
     final result = await getProductsUseCase(
       page: 1,
       limit: _pageSize,
@@ -116,15 +120,16 @@ class CatalogBloc extends Bloc<CatalogEvent, CatalogState> {
       (failure) => emit(CatalogFailure(errorMessage: failure.toString())),
       (products) {
         if (products.isEmpty) {
-          emit(CatalogEmpty());
+          emit(CatalogEmpty(categories: categories));
         } else {
           emit(
             CatalogSuccess(
               products: products,
-              categories: [],
+              categories: categories,
               hasMore: products.length == _pageSize,
               page: 1,
               query: event.query,
+              selectedCategory: '',
             ),
           );
         }
@@ -136,8 +141,13 @@ class CatalogBloc extends Bloc<CatalogEvent, CatalogState> {
     CatalogCategoryChanged event,
     Emitter<CatalogState> emit,
   ) async {
-    emit(CatalogLoading());
+    final categories = state is CatalogSuccess
+        ? (state as CatalogSuccess).categories
+        : state is CatalogEmpty
+        ? (state as CatalogEmpty).categories
+        : <String>[];
 
+    emit(CatalogLoading());
     final result = await getProductsUseCase(
       page: 1,
       limit: _pageSize,
@@ -149,12 +159,12 @@ class CatalogBloc extends Bloc<CatalogEvent, CatalogState> {
       (failure) => emit(CatalogFailure(errorMessage: failure.toString())),
       (products) {
         if (products.isEmpty) {
-          emit(CatalogEmpty());
+          emit(CatalogEmpty(categories: categories));
         } else {
           emit(
             CatalogSuccess(
               products: products,
-              categories: [],
+              categories: categories,
               hasMore: products.length == _pageSize,
               page: 1,
               selectedCategory: event.category,
