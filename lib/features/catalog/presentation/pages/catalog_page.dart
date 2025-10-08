@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mini_catalog/features/catalog/presentation/widgets/catalog_shimmer.dart';
 import 'package:mini_catalog/features/product_detail/presentation/bloc/product_detail_bloc.dart';
 import 'package:mini_catalog/features/product_detail/presentation/pages/product_detail_page.dart';
 import '../../domain/entities/product.dart';
@@ -132,7 +133,7 @@ class _CatalogPageState extends State<CatalogPage> {
                 child: BlocBuilder<CatalogBloc, CatalogState>(
                   builder: (context, state) {
                     if (state is CatalogInitial || state is CatalogLoading) {
-                      return const Center(child: CircularProgressIndicator());
+                      return const Center(child: CatalogShimmer());
                     } else if (state is CatalogFailure) {
                       return Center(
                         child: Column(
