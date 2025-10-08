@@ -1,10 +1,10 @@
 import 'package:dartz/dartz.dart';
-import '../entities/product.dart';
-import '../repositories/product_repository.dart';
+import '../repositories/product_detail_repository.dart';
 import '../../../../core/errors/failures.dart';
+import '../../../catalog/domain/entities/product.dart';
 
 class GetProductDetail {
-  final ProductRepository repository;
+  final ProductDetailRepository repository;
 
   GetProductDetail(this.repository);
 

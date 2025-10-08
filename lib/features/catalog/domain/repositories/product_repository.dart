@@ -11,6 +11,4 @@ abstract class ProductRepository {
   });
 
   Future<Either<Failure, List<String>>> fetchCategories();
-
-  Future<Either<Failure, Product>> fetchProductDetail(int id);
 }
