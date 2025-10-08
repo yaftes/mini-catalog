@@ -28,8 +28,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
         title: const Text(
-          'Product Details',
-          style: TextStyle(fontWeight: FontWeight.bold),
+          'Product Detail',
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
         ),
         centerTitle: true,
         backgroundColor: Colors.black,

@@ -10,8 +10,7 @@ abstract class ProductLocalDataSource {
 
 class ProductLocalDataSourceImpl implements ProductLocalDataSource {
   final Box box;
-
-  ProductLocalDataSourceImpl(this.box);
+  ProductLocalDataSourceImpl({required this.box});
 
   @override
   Future<void> cacheProducts(List<ProductModel> products) async {
