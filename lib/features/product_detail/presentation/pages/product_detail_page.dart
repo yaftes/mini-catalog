@@ -1,5 +1,7 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mini_catalog/app/theme_cubit.dart';
 import 'package:mini_catalog/features/product_detail/presentation/bloc/product_detail_bloc.dart';
 import 'package:mini_catalog/features/product_detail/presentation/bloc/product_detail_events.dart';
 import 'package:mini_catalog/features/product_detail/presentation/bloc/product_detail_states.dart';
@@ -25,15 +27,29 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
 
   @override
   Widget build(BuildContext context) {
+    final themeCubit = context.read<ThemeCubit>();
+
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text(
           'Product Detail',
-          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+          style: TextStyle(fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
-        backgroundColor: Colors.black,
+        actions: [
+          BlocBuilder<ThemeCubit, ThemeMode>(
+            builder: (context, themeMode) {
+              final isDark = themeMode == ThemeMode.dark;
+              return IconButton(
+                onPressed: () {
+                  themeCubit.toggleTheme();
+                },
+                icon: Icon(isDark ? Icons.dark_mode : Icons.light_mode),
+              );
+            },
+          ),
+        ],
       ),
       body: BlocBuilder<ProductDetailBloc, ProductDetailState>(
         builder: (context, state) {
@@ -53,21 +69,34 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                       child: Container(
                         height: 320,
                         decoration: BoxDecoration(
-                          image: DecorationImage(
-                            image: NetworkImage(product.image),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: CachedNetworkImage(
+                            imageUrl: product.image,
                             fit: BoxFit.cover,
+                            placeholder: (context, url) => const Center(
+                              child: CircularProgressIndicator(),
+                            ),
+                            errorWidget: (context, url, error) => const Icon(
+                              Icons.broken_image,
+                              size: 50,
+                              color: Colors.grey,
+                            ),
                           ),
                         ),
                       ),
                     ),
+
                     Container(
                       padding: const EdgeInsets.all(20),
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.vertical(
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).cardColor,
+                        borderRadius: const BorderRadius.vertical(
                           top: Radius.circular(30),
                         ),
-                        boxShadow: [
+                        boxShadow: const [
                           BoxShadow(
                             color: Colors.black12,
                             blurRadius: 15,
@@ -130,7 +159,9 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                             product.description,
                             style: TextStyle(
                               fontSize: 15,
-                              color: Colors.grey[800],
+                              color: Theme.of(
+                                context,
+                              ).textTheme.bodyMedium?.color,
                               height: 1.5,
                             ),
                           ),
@@ -167,9 +198,12 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
             );
           } else if (state is ProductDetailError) {
             return Center(
-              child: Text(
-                state.message,
-                style: const TextStyle(color: Colors.red, fontSize: 16),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Text(
+                  'No cached data. please check your internet connection',
+                  style: const TextStyle(color: Colors.black, fontSize: 16),
+                ),
               ),
             );
           } else {

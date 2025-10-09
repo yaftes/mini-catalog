@@ -18,6 +18,7 @@ class CatalogSuccess extends CatalogState {
   final int page;
   final String query;
   final String selectedCategory;
+  final String? errorMessage;
 
   const CatalogSuccess({
     required this.products,
@@ -26,6 +27,7 @@ class CatalogSuccess extends CatalogState {
     required this.page,
     this.query = '',
     this.selectedCategory = '',
+    this.errorMessage,
   });
 
   CatalogSuccess copyWith({
@@ -35,6 +37,7 @@ class CatalogSuccess extends CatalogState {
     int? page,
     String? query,
     String? selectedCategory,
+    String? errorMessage,
   }) {
     return CatalogSuccess(
       products: products ?? this.products,
@@ -43,6 +46,7 @@ class CatalogSuccess extends CatalogState {
       page: page ?? this.page,
       query: query ?? this.query,
       selectedCategory: selectedCategory ?? this.selectedCategory,
+      errorMessage: errorMessage ?? this.errorMessage,
     );
   }
 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mini_catalog/app/theme_cubit.dart';
 import 'package:mini_catalog/features/catalog/presentation/bloc/catalog_bloc.dart';
 import 'package:mini_catalog/features/catalog/presentation/bloc/catalog_events.dart';
 import 'package:mini_catalog/features/catalog/presentation/pages/catalog_page.dart';
@@ -19,12 +20,19 @@ class MyApp extends StatelessWidget {
         BlocProvider<ProductDetailBloc>(
           create: (_) => di.sl<ProductDetailBloc>(),
         ),
+        BlocProvider<ThemeCubit>(create: (_) => di.sl<ThemeCubit>()),
       ],
-      child: MaterialApp(
-        debugShowCheckedModeBanner: false,
-        title: 'Mini Catalog',
-        theme: ThemeData(primarySwatch: Colors.blue),
-        home: const CatalogPage(),
+      child: BlocBuilder<ThemeCubit, ThemeMode>(
+        builder: (context, themeMode) {
+          return MaterialApp(
+            debugShowCheckedModeBanner: false,
+            title: 'Mini Catalog',
+            theme: ThemeData.light(),
+            darkTheme: ThemeData.dark(),
+            themeMode: themeMode,
+            home: const CatalogPage(),
+          );
+        },
       ),
     );
   }

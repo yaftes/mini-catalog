@@ -10,7 +10,7 @@ class GetProductsUsecase {
 
   Future<Either<Failure, List<Product>>> call({
     required int page,
-    int limit = 20,
+    int limit = 10,
     String? query,
     String? category,
   }) async {

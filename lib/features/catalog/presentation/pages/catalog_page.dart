@@ -1,5 +1,7 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mini_catalog/app/theme_cubit.dart';
 import 'package:mini_catalog/features/catalog/presentation/widgets/catalog_shimmer.dart';
 import 'package:mini_catalog/features/product_detail/presentation/bloc/product_detail_bloc.dart';
 import 'package:mini_catalog/features/product_detail/presentation/pages/product_detail_page.dart';
@@ -42,12 +44,28 @@ class _CatalogPageState extends State<CatalogPage> {
 
   @override
   Widget build(BuildContext context) {
+    final themeCubit = context.read<ThemeCubit>();
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
+        surfaceTintColor: Colors.transparent,
+        scrolledUnderElevation: 0,
         centerTitle: true,
-        title: const Text('Products', style: TextStyle(color: Colors.white)),
-        backgroundColor: Colors.black,
+        title: const Text('Products'),
+        actions: [
+          BlocBuilder<ThemeCubit, ThemeMode>(
+            builder: (context, themeMode) {
+              final isDark = themeMode == ThemeMode.dark;
+              return IconButton(
+                onPressed: () {
+                  themeCubit.toggleTheme();
+                },
+                icon: Icon(isDark ? Icons.dark_mode : Icons.light_mode),
+              );
+            },
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
@@ -63,7 +81,7 @@ class _CatalogPageState extends State<CatalogPage> {
                 decoration: InputDecoration(
                   hintText: 'Search products...',
                   prefixIcon: const Icon(Icons.search),
-                  fillColor: Colors.white,
+                  fillColor: Theme.of(context).cardColor,
                   filled: true,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -83,7 +101,6 @@ class _CatalogPageState extends State<CatalogPage> {
                   selected = state.selectedCategory;
                 } else if (state is CatalogEmpty) {
                   categories = state.categories;
-                  selected = '';
                 }
 
                 if (categories.isNotEmpty) {
@@ -117,7 +134,6 @@ class _CatalogPageState extends State<CatalogPage> {
                     ),
                   );
                 }
-
                 return const SizedBox.shrink();
               },
             ),
@@ -138,7 +154,7 @@ class _CatalogPageState extends State<CatalogPage> {
                           const SizedBox(height: 8),
                           ElevatedButton(
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.deepPurple,
+                              backgroundColor: Colors.black,
                             ),
                             onPressed: () {
                               context.read<CatalogBloc>().add(
@@ -161,13 +177,32 @@ class _CatalogPageState extends State<CatalogPage> {
                       },
                       child: ListView.builder(
                         controller: _scrollController,
-                        itemCount: products.length + (state.hasMore ? 1 : 0),
+                        itemCount: products.length + 1,
                         itemBuilder: (context, index) {
                           if (index == products.length) {
-                            return const Padding(
-                              padding: EdgeInsets.all(16),
-                              child: Center(child: CircularProgressIndicator()),
-                            );
+                            if (state.hasMore) {
+                              return Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: Center(
+                                  child: ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.black,
+                                    ),
+                                    onPressed: () {
+                                      context.read<CatalogBloc>().add(
+                                        CatalogLoadMore(),
+                                      );
+                                    },
+                                    child: const Text(
+                                      'Load More',
+                                      style: TextStyle(color: Colors.white),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            } else {
+                              return const SizedBox.shrink();
+                            }
                           }
 
                           final Product product = products[index];
@@ -185,13 +220,22 @@ class _CatalogPageState extends State<CatalogPage> {
                               contentPadding: const EdgeInsets.all(8),
                               leading: ClipRRect(
                                 borderRadius: BorderRadius.circular(8),
-                                child: Image.network(
-                                  product.image,
+                                child: CachedNetworkImage(
+                                  imageUrl: product.image,
                                   width: 60,
                                   height: 60,
                                   fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) =>
-                                      const Icon(Icons.image),
+                                  placeholder: (context, url) => const Center(
+                                    child: SizedBox(
+                                      width: 30,
+                                      height: 30,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    ),
+                                  ),
+                                  errorWidget: (context, url, error) =>
+                                      const Icon(Icons.broken_image),
                                 ),
                               ),
                               title: Text(
@@ -203,7 +247,11 @@ class _CatalogPageState extends State<CatalogPage> {
                               ),
                               subtitle: Text(
                                 '\$${product.price.toStringAsFixed(2)}',
-                                style: const TextStyle(color: Colors.black),
+                                style: TextStyle(
+                                  color: Theme.of(
+                                    context,
+                                  ).textTheme.bodyMedium?.color,
+                                ),
                               ),
                               onTap: () {
                                 Navigator.push(

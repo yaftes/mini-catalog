@@ -4,7 +4,13 @@ import '../models/product_model.dart';
 import '../../../../core/errors/exceptions.dart';
 
 abstract class ProductRemoteDataSource {
-  Future<List<ProductModel>> getProducts();
+  Future<List<ProductModel>> getProducts({
+    required int page,
+    required int limit,
+    String? query,
+    String? category,
+  });
+
   Future<List<String>> getCategories();
 }
 
@@ -14,9 +20,22 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
   ProductRemoteDataSourceImpl(this.dio);
 
   @override
-  Future<List<ProductModel>> getProducts() async {
+  Future<List<ProductModel>> getProducts({
+    required int page,
+    required int limit,
+    String? query,
+    String? category,
+  }) async {
     try {
-      final response = await dio.get(ApiConstants.products);
+      final response = await dio.get(
+        ApiConstants.products,
+        queryParameters: {
+          'page': page,
+          'limit': limit,
+          if (query != null && query.isNotEmpty) 'q': query,
+          if (category != null && category.isNotEmpty) 'category': category,
+        },
+      );
 
       if (response.statusCode == 200) {
         return (response.data as List)

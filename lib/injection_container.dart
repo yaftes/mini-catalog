@@ -2,6 +2,7 @@ import 'package:get_it/get_it.dart';
 import 'package:dio/dio.dart';
 import 'package:hive/hive.dart';
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
+import 'package:mini_catalog/app/theme_cubit.dart';
 import 'package:path_provider/path_provider.dart';
 
 import 'package:mini_catalog/core/const/cache_constants.dart';
@@ -81,4 +82,11 @@ Future<void> init() async {
   );
   sl.registerLazySingleton(() => GetProductDetailUsecase(sl()));
   sl.registerFactory(() => ProductDetailBloc(getProductDetail: sl()));
+
+  await Hive.openBox('settings');
+
+  sl.registerLazySingleton<ThemeCubit>(() {
+    final cubit = ThemeCubit();
+    return cubit;
+  });
 }

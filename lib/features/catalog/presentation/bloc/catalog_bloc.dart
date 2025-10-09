@@ -4,12 +4,17 @@ import '../../domain/usecases/get_catagories_usecase.dart';
 import '../../domain/usecases/get_products_usecase.dart';
 import 'catalog_events.dart';
 import 'catalog_state.dart';
+import 'package:rxdart/rxdart.dart';
+
+EventTransformer<E> debounce<E>(Duration duration) {
+  return (events, mapper) => events.debounceTime(duration).switchMap(mapper);
+}
 
 class CatalogBloc extends Bloc<CatalogEvent, CatalogState> {
   final GetProductsUsecase getProductsUseCase;
   final GetCategoriesUsecase getCategoriesUseCase;
 
-  static const int _pageSize = 20;
+  static const int _pageSize = 10;
 
   CatalogBloc({
     required this.getProductsUseCase,
@@ -18,9 +23,13 @@ class CatalogBloc extends Bloc<CatalogEvent, CatalogState> {
     on<CatalogStarted>(_onStarted);
     on<CatalogRefreshed>(_onRefreshed);
     on<CatalogLoadMore>(_onLoadMore);
-    on<CatalogQueryChanged>(_onQueryChanged);
     on<CatalogCategoryChanged>(_onCategoryChanged);
     on<CatalogRetryRequested>(_onRetryRequested);
+
+    on<CatalogQueryChanged>(
+      _onQueryChanged,
+      transformer: debounce(const Duration(milliseconds: 400)),
+    );
   }
 
   Future<void> _onStarted(
@@ -35,12 +44,7 @@ class CatalogBloc extends Bloc<CatalogEvent, CatalogState> {
         limit: _pageSize,
       );
 
-      // Convert dynamic to String
-      final categories = categoriesResult
-          .getOrElse(() => [])
-          .map((e) => e.toString())
-          .toList();
-
+      final categories = categoriesResult.getOrElse(() => []);
       final products = productsResult.getOrElse(() => []);
 
       if (products.isEmpty) {
@@ -52,6 +56,8 @@ class CatalogBloc extends Bloc<CatalogEvent, CatalogState> {
             categories: categories,
             hasMore: products.length == _pageSize,
             page: 1,
+            query: '',
+            selectedCategory: '',
           ),
         );
       }
@@ -84,7 +90,14 @@ class CatalogBloc extends Bloc<CatalogEvent, CatalogState> {
     );
 
     result.fold(
-      (failure) => emit(CatalogFailure(errorMessage: failure.toString())),
+      (failure) {
+        emit(
+          currentState.copyWith(
+            errorMessage: failure.toString(),
+            hasMore: false,
+          ),
+        );
+      },
       (products) {
         final allProducts = [...currentState.products, ...products];
         emit(
@@ -102,13 +115,14 @@ class CatalogBloc extends Bloc<CatalogEvent, CatalogState> {
     CatalogQueryChanged event,
     Emitter<CatalogState> emit,
   ) async {
-    final categories = state is CatalogSuccess
-        ? (state as CatalogSuccess).categories
-        : state is CatalogEmpty
-        ? (state as CatalogEmpty).categories
-        : <String>[];
-
     emit(CatalogLoading());
+
+    final categoriesResult = await getCategoriesUseCase();
+    final categories = categoriesResult.fold(
+      (failure) => <String>[],
+      (cats) => cats,
+    );
+
     final result = await getProductsUseCase(
       page: 1,
       limit: _pageSize,
@@ -141,13 +155,9 @@ class CatalogBloc extends Bloc<CatalogEvent, CatalogState> {
     CatalogCategoryChanged event,
     Emitter<CatalogState> emit,
   ) async {
-    final categories = state is CatalogSuccess
-        ? (state as CatalogSuccess).categories
-        : state is CatalogEmpty
-        ? (state as CatalogEmpty).categories
-        : <String>[];
-
+    final categories = _getCurrentCategories();
     emit(CatalogLoading());
+
     final result = await getProductsUseCase(
       page: 1,
       limit: _pageSize,
@@ -168,6 +178,7 @@ class CatalogBloc extends Bloc<CatalogEvent, CatalogState> {
               hasMore: products.length == _pageSize,
               page: 1,
               selectedCategory: event.category,
+              query: '',
             ),
           );
         }
@@ -180,5 +191,14 @@ class CatalogBloc extends Bloc<CatalogEvent, CatalogState> {
     Emitter<CatalogState> emit,
   ) async {
     add(CatalogStarted());
+  }
+
+  List<String> _getCurrentCategories() {
+    if (state is CatalogSuccess) {
+      return (state as CatalogSuccess).categories;
+    } else if (state is CatalogEmpty) {
+      return (state as CatalogEmpty).categories;
+    }
+    return [];
   }
 }
