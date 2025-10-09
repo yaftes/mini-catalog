@@ -117,38 +117,47 @@ class CatalogBloc extends Bloc<CatalogEvent, CatalogState> {
   ) async {
     emit(CatalogLoading());
 
-    final categoriesResult = await getCategoriesUseCase();
-    final categories = categoriesResult.fold(
-      (failure) => <String>[],
-      (cats) => cats,
-    );
+    try {
+      final categoriesResult = await getCategoriesUseCase();
+      final categories = categoriesResult.fold(
+        (failure) => <String>[],
+        (cats) => cats,
+      );
 
-    final result = await getProductsUseCase(
-      page: 1,
-      limit: _pageSize,
-      query: event.query,
-      category: '',
-    );
+      final result = await getProductsUseCase(page: 1, limit: 100);
 
-    result.fold(
-      (failure) => emit(CatalogFailure(errorMessage: failure.toString())),
-      (products) {
-        if (products.isEmpty) {
-          emit(CatalogEmpty(categories: categories));
-        } else {
-          emit(
-            CatalogSuccess(
-              products: products,
-              categories: categories,
-              hasMore: products.length == _pageSize,
-              page: 1,
-              query: event.query,
-              selectedCategory: '',
-            ),
-          );
-        }
-      },
-    );
+      result.fold(
+        (failure) => emit(CatalogFailure(errorMessage: failure.toString())),
+        (allProducts) {
+          final filteredProducts = allProducts
+              .where(
+                (p) =>
+                    p.title?.toLowerCase().contains(
+                      event.query.toLowerCase(),
+                    ) ??
+                    false,
+              )
+              .toList();
+
+          if (filteredProducts.isEmpty) {
+            emit(CatalogEmpty(categories: categories));
+          } else {
+            emit(
+              CatalogSuccess(
+                products: filteredProducts,
+                categories: categories,
+                hasMore: false,
+                page: 1,
+                query: event.query,
+                selectedCategory: '',
+              ),
+            );
+          }
+        },
+      );
+    } catch (e) {
+      emit(CatalogFailure(errorMessage: e.toString()));
+    }
   }
 
   Future<void> _onCategoryChanged(
