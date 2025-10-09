@@ -41,14 +41,12 @@ cd mini_catalog
 
 ## 📸 Screenshots
 
-<table>
-  <tr>
-    <td><img src="screenshots/list_of_products_dark.jpg" width="300" alt="Catalog Screen"></td>
-    <td><img src="screenshots/list_of_products_light.jpg" width="300" alt="Product Detail Screen"></td>
-  </tr>
-  <tr>
-    <td><img src="screenshots/product_detail.jpg" width="300" alt="Search Screen"></td>
-    <td><img src="screenshots/splash_screen.jpg" width="300" alt="Categories Filter Screen"></td>
-  </tr>
-</table>
+<p float="left">
+  <img src="screenshots/list_of_products_dark.jpg" width="200" />
+  <img src="screenshots/list_of_products_light.jpg" width="200" />
+</p>
+<p float="left">
+  <img src="screenshots/product_detail.jpg" width="200" />
+  <img src="screenshots/splash_screen.jpg" width="200" />
+</p>
 
