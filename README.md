@@ -4,16 +4,27 @@ A small product catalog app built with **Flutter** and **BLoC**, supporting sear
 
 ---
 
+## 📱 Screenshots
+
+### 🟢 Splash & Login
+
+<img src="screenshots/list_of_products_dark.jpg" width="200"/> <img src="screenshots/list_of_products_light.jpg" width="200"/>
+
+### 🏠 Home & Product Details
+
+<img src="screenshots/product_detail.jpg" width="200"/> <img src="screenshots/splash_screen.jpg" width="200"/>
+
 ## ⚙️ Flutter Version
 
-- **Flutter:** 3.35.2 
+- **Flutter:** 3.35.2
 - **Dart:** Null-safety enabled
 
 ---
 
 ## 🚀 How to Run
 
-1. **Clone the repository**  
+1. **Clone the repository**
+
 ```bash
 git clone https://github.com/yaftes/mini-catalog
 cd mini_catalog
@@ -39,14 +50,4 @@ cd mini_catalog
 
     dartz: Functional programming (Either type) → clean handling of success/failure without throwing exceptions.
 
-## 📸 Screenshots
-
-<p float="left">
-  <img src="screenshots/list_of_products_dark.jpg" width="200" />
-  <img src="screenshots/list_of_products_light.jpg" width="200" />
-</p>
-<p float="left">
-  <img src="screenshots/product_detail.jpg" width="200" />
-  <img src="screenshots/splash_screen.jpg" width="200" />
-</p>
-
+```

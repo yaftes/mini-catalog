@@ -9,6 +9,7 @@ abstract class ProductLocalDataSource {
 }
 
 class ProductLocalDataSourceImpl implements ProductLocalDataSource {
+
   final Box box;
   ProductLocalDataSourceImpl({required this.box});
 

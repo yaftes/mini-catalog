@@ -10,4 +10,5 @@ class GetCategoriesUsecase {
   Future<Either<Failure, List<String>>> call() async {
     return await repository.fetchCategories();
   }
+  
 }
